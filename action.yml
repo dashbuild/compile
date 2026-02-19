@@ -1,0 +1,32 @@
+name: "Dashbuild Compile"
+description: "Assemble registered modules and build the final Observable Framework static site"
+
+inputs:
+  show-overview:
+    description: "Whether to show the module overview section on the dashboard index page"
+    required: false
+    default: true
+
+outputs:
+  site-dir:
+    description: "Path to the compiled static site directory, suitable for deployment to GitHub Pages"
+    value: ${{ steps.build-site.outputs.site-dir }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate config and index
+      shell: bash
+      env:
+        DASHBUILD_SHOW_OVERVIEW: ${{ inputs.show-overview }}
+      run: |
+        node "${{ github.action_path }}/scripts/assemble-site.js"
+
+    - name: Build site
+      id: build-site
+      shell: bash
+      run: |
+        cd "${DASHBUILD_DIR}"
+        npx observable build
+        echo "site-dir=${DASHBUILD_DIR}/dist" >> "$GITHUB_OUTPUT"
+        echo "::notice::Dashbuild site built successfully"
